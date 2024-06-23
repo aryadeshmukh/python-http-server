@@ -85,15 +85,16 @@ class MyHandler(BaseHTTPRequestHandler):
             parsed_path = urlparse(self.path).path.strip('/')
             path_components = parsed_path.split('/')
 
-            if len(path_components) == 1:
-                response_func = routes[path_components[0]]
-                response = response_func()
-            elif len(path_components) == 2:
-                response_func = routes[path_components[0]]
-                response = response_func(path_components[1])
-            else:
-                response_func = routes[path_components[0]]
-                response = response_func("/".join(path_components[1:]))  
+            match len(path_components):
+                case 1:
+                    response_func = routes[path_components[0]]
+                    response = response_func()
+                case 2:
+                    response_func = routes[path_components[0]]
+                    response = response_func(path_components[1])
+                case _:
+                    response_func = routes[path_components[0]]
+                    response = response_func("/".join(path_components[1:]))  
         except Exception:
             response = handle_404()
 
