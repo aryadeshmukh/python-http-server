@@ -53,6 +53,14 @@ def handle_404() -> ResponseInfo:
     '''Specifies response information for page not found.'''
     return ResponseInfo(404, 'text/plain', 'Page not found')
 
+def handle_400() -> ResponseInfo:
+    '''Specifies response information for bad request.'''
+    return ResponseInfo(400, 'text/plain', 'Bad Request')
+
+def handle_403() -> ResponseInfo:
+    '''Specifies response information for access denied.'''
+    return ResponseInfo(403, 'text/plain', 'Access Denied')
+
 def create_response(response_func: Callable, *arg) -> ResponseInfo:
     '''
     Returns the response of a one argument response_func
@@ -65,10 +73,12 @@ def create_response(response_func: Callable, *arg) -> ResponseInfo:
 
 # Mapping of url path to function with specification of variable rules
 routes = {
-    "" : (handle_root, None),
-    "hello" : (handle_hello, None),
-    "user" : (handle_user, 'str'),
-    "path" : (handle_path, 'path')
+    '' : (handle_root, None),
+    'hello' : (handle_hello, None),
+    'user' : (handle_user, 'str'),
+    'path' : (handle_path, 'path'),
+    'bad-request' : (handle_400, None),
+    'access-denied' : (handle_403, None)
 }
 
 class MyHandler(BaseHTTPRequestHandler):
