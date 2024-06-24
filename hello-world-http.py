@@ -61,6 +61,14 @@ def handle_403() -> ResponseInfo:
     '''Specifies response information for access denied.'''
     return ResponseInfo(403, 'text/plain', 'Access Denied')
 
+def raise_400() -> None:
+    '''Raises a 400 error.'''
+    raise BadRequest()
+
+def raise_403() -> None:
+    '''Raises a 403 error.'''
+    raise AccessDenied()
+
 def create_response(response_func: Callable, *arg) -> ResponseInfo:
     '''
     Returns the response of a one argument response_func
@@ -71,14 +79,22 @@ def create_response(response_func: Callable, *arg) -> ResponseInfo:
     '''
     return response_func(*arg)
 
+class BadRequest(Exception):
+    '''Error type for error code 400.'''
+    pass
+
+class AccessDenied(Exception):
+    '''Error type for error code 403'''
+    pass
+
 # Mapping of url path to function with specification of variable rules
 routes = {
     '' : (handle_root, None),
     'hello' : (handle_hello, None),
     'user' : (handle_user, 'str'),
     'path' : (handle_path, 'path'),
-    'bad-request' : (handle_400, None),
-    'access-denied' : (handle_403, None)
+    'bad-request' : (raise_400, None),
+    'access-denied' : (raise_403, None)
 }
 
 class MyHandler(BaseHTTPRequestHandler):
@@ -132,7 +148,11 @@ class MyHandler(BaseHTTPRequestHandler):
                     else:
                         response = handle_404()
 
-        except Exception:
+        except BadRequest:
+            response = handle_400()
+        except AccessDenied:
+            response = handle_403()
+        except:
             response = handle_404()
 
         self.send_response(response.code)
