@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from markupsafe import escape
+from typing import Callable
 
 class ResponseInfo:
     '''
@@ -52,6 +53,23 @@ def handle_404() -> ResponseInfo:
     '''Specifies response information for page not found.'''
     return ResponseInfo(404, 'text/plain', 'Page not found')
 
+def create_response(response_func: Callable, *arg) -> ResponseInfo:
+    '''
+    Returns the response of a one argument response_func
+    
+    Keyword arguments:
+    response_func -- function whose return values should be returned
+    arg -- arguments to response_func
+    '''
+    return response_func(*arg)
+
+routes = {
+    "" : (handle_root, None),
+    "hello" : (handle_hello, None),
+    "user" : (handle_user, 'str'),
+    "path" : (handle_path, 'path')
+}
+
 class MyHandler(BaseHTTPRequestHandler):
     '''
     Custom HTTP request handler.
@@ -74,27 +92,40 @@ class MyHandler(BaseHTTPRequestHandler):
         If path is in the form of /path/<subpath>, 'Subpath <subpath>' is displayed.
         If none of the above are true then 'No page found' is displayed.
         '''
-        routes = {
-            "" : handle_root,
-            "hello" : handle_hello,
-            "user" : handle_user,
-            "path" : handle_path
-        }
 
         try:
             parsed_path = urlparse(self.path).path.strip('/')
             path_components = parsed_path.split('/')
 
-            match len(path_components):
-                case 1:
-                    response_func = routes[path_components[0]]
-                    response = response_func()
-                case 2:
-                    response_func = routes[path_components[0]]
-                    response = response_func(path_components[1])
-                case _:
-                    response_func = routes[path_components[0]]
-                    response = response_func("/".join(path_components[1:]))  
+            curr_path_depth = 0
+            curr_path = None
+
+            while curr_path not in routes and curr_path_depth < len(path_components):
+                curr_path_depth += 1
+                curr_path = '/'.join(path_components[:curr_path_depth])
+            
+            response = None
+
+            match routes[curr_path][1]:
+                case 'str':
+                    print(curr_path_depth)
+                    if curr_path_depth == len(path_components) - 1:
+                        response = create_response(routes[curr_path][0], path_components[curr_path_depth])
+                    else:
+                        response = handle_404()
+                case 'int':
+                    if curr_path_depth == len(path_components):
+                        response = create_response(routes[curr_path][0], int(path_components[curr_path_depth]))
+                    else:
+                        response = handle_404()
+                case 'path':
+                    response = create_response(routes[curr_path][0], '/'.join(path_components[curr_path_depth:]))
+                case None:
+                    if curr_path_depth == len(path_components):
+                        response = create_response(routes[curr_path][0])
+                    else:
+                        response = handle_404()
+
         except Exception:
             response = handle_404()
 
