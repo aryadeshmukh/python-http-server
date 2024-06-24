@@ -97,13 +97,8 @@ class MyHandler(BaseHTTPRequestHandler):
         '''
         Processes GET request and displays appropriate message on webpage.
 
-        If no path is specified, 'Index Page' is displayed.
-        If path is /hello, 'Hello World' is displayed.
-        If path is in the form of /user/<username>, 'User: <username>' is displayed.
-        If path is in the form of /path/<subpath>, 'Subpath <subpath>' is displayed.
-        If none of the above are true then 'No page found' is displayed.
+        Handles variable rules for str, int, path, and no variable type GET requests.
         '''
-
         try:
             parsed_path = urlparse(self.path).path.strip('/')
             path_components = parsed_path.split('/')
