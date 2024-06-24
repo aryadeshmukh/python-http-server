@@ -63,6 +63,7 @@ def create_response(response_func: Callable, *arg) -> ResponseInfo:
     '''
     return response_func(*arg)
 
+# Mapping of url path to function with specification of variable rules
 routes = {
     "" : (handle_root, None),
     "hello" : (handle_hello, None),
