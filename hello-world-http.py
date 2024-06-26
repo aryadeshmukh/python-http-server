@@ -3,6 +3,25 @@ from urllib.parse import urlparse
 from markupsafe import escape
 from typing import Callable
 
+# Mapping of url path to function with specification of variable rules
+routes = {
+    # '' : (handle_root, None),
+    # 'hello' : (handle_hello, None),
+    # 'user' : (handle_user, 'str'),
+    # 'path' : (handle_path, 'path'),
+    # 'bad-request' : (handle_400, None),
+    # 'access-denied' : (handle_403, None)
+}
+
+# Decorator that adds function as a route handler
+def route_info(path: str, arg_type: str = None):
+    def route_info_decorator(func):
+        routes[path] = (func, arg_type)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+    return route_info_decorator
+
 class ResponseInfo:
     '''
     Response Information for GET requests.
@@ -23,14 +42,17 @@ class ResponseInfo:
         self.content_type = content_type
         self.body = body
 
+@route_info('')
 def handle_root() -> ResponseInfo:
     '''Specifies response information for root url.'''
     return ResponseInfo(200, 'text/plain', 'Index Page')
 
+@route_info('hello')
 def handle_hello() -> ResponseInfo:
     '''Specifies response information for url path /hello.'''
     return ResponseInfo(200, 'text/html', '<html><body><h1>Hello World</h1></body></html>')
 
+@route_info('user', 'str')
 def handle_user(username: str) -> ResponseInfo:
     '''
     Specifies repsonse information for url path /user/<username>.
@@ -40,6 +62,7 @@ def handle_user(username: str) -> ResponseInfo:
     '''
     return ResponseInfo(200, 'text/plain', f'User: {escape(username)}')
 
+@route_info('path', 'path')
 def handle_path(subpath: str) -> ResponseInfo:
     '''
     Specifies response information for url path /path/<subpath>.
@@ -53,10 +76,12 @@ def handle_404() -> ResponseInfo:
     '''Specifies response information for page not found.'''
     return ResponseInfo(404, 'text/plain', 'Page not found')
 
+@route_info('bad-request')
 def handle_400() -> ResponseInfo:
     '''Specifies response information for bad request.'''
     return ResponseInfo(400, 'text/plain', 'Bad Request')
 
+@route_info('access-denied')
 def handle_403() -> ResponseInfo:
     '''Specifies response information for access denied.'''
     return ResponseInfo(403, 'text/plain', 'Access Denied')
@@ -70,16 +95,6 @@ def create_response(response_func: Callable, *arg) -> ResponseInfo:
     arg -- arguments to response_func
     '''
     return response_func(*arg)
-
-# Mapping of url path to function with specification of variable rules
-routes = {
-    '' : (handle_root, None),
-    'hello' : (handle_hello, None),
-    'user' : (handle_user, 'str'),
-    'path' : (handle_path, 'path'),
-    'bad-request' : (handle_400, None),
-    'access-denied' : (handle_403, None)
-}
 
 class MyHandler(BaseHTTPRequestHandler):
     '''
